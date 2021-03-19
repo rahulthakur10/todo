@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- <link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css"> -->
+    <script src="https://kit.fontawesome.com/a81368914c.js"></script>
+    <title>TODO List</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <h1><span class="styling">TODO</span>LIST</h1>
+
+    <div class="todolist">
+        <div class="input_div">
+            <input class="input" type="text" placeholder="ADD TASK TO THE LIST" id="todoInput"></br>
+            <br><button class="addButton" onclick="addNewTodo()"><i class="fas fa-plus-circle"></i></button>
+        </div>
+        <div class="container">
+            <div class="item" id="record">
+                <table class="table1" id="table">
+                </table>
+            </div>
+
+        </div>
+    </div>
+    <script>
+        var ID = -1;
+        var obj;
+        let httpRequest = new XMLHttpRequest();
+        httpRequest.open("GET", "http://localhost:8080/getfulllist");
+        httpRequest.send();
+        httpRequest.onload = function () {
+            obj = JSON.parse(httpRequest.responseText);
+            console.log(obj);
+            loadData();
+        }
+        function loadData() {
+            var index = 0;
+            for (index = 0; index < obj.length; index++) {
+                var table = document.getElementById("table");
+                var row = table.insertRow(index);
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);
+                var cell3 = row.insertCell(2);
+                var cell4 = row.insertCell(3);
+                var isCompleted = obj[index].isCompleted;
+                var name;
+
+                if (isCompleted) {
+                    name = "<strike>" + obj[index].name + "</strike>";
+
+                }
+                else {
+                    name = obj[index].name;
+                }
+
+                cell1.innerHTML = name;
+                if (obj[index].isCompleted == true) {
+                    cell2.innerHTML = "<input type = 'checkbox' value =" + index + " checked onclick = 'isComplete(this)' id = 'isComplete' >";
+
+                }
+                else {
+                    cell2.innerHTML = "<input type = 'checkbox' value =" + index + " onclick = 'isComplete(this)' id = 'isComplete' >";
+                }
+                cell3.innerHTML = "<button class = 'editButton' onclick = 'editTodo(this)' value=" + index + ">Edit</button>";
+                cell4.innerHTML = "<button class = 'removeButton' onclick='removeTodo(this)' value=" + obj[index].id + ">Remove</button>";
+            }
+        }
+        function addNewTodo() {
+            var name = document.getElementById('todoInput').value;
+            if (name == '') {
+                document.getElementById("todoInput").style.borderColor = "red";
+                alert("Fill the field");
+                
+                return;
+            }
+            url = "http://localhost:8080/savelist";
+            url1 = "http://localhost:8080/updatelist/";
+            if (ID == -1) {
+                fetch(url, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: name,
+                    }),
+                    headers: {
+                        "Content-Type": "application/json; charset=UTF-8"
+                    }
+                }).then(function (response) {
+                    window.location.href = "/index.html";
+                    return response;
+                }).then(function (data) {
+                    console.log(data);
+                });
+
+            }
+            else {
+                fetch(url1, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        id: ID,
+                        name: name,
+                    }),
+                    headers: {
+                        "Content-Type": "application/json; charset=UTF-8"
+                    }
+                }).then(function (response) {
+                    ID = -1;
+                    window.location.href = "/index.html";
+                    return response;
+                }).then(function (data) {
+                    ID = -1;
+                    console.log(data);
+                });
+            }
+        }
+        function removeTodo(button) {
+            var id = button.value;
+            url = "http://localhost:8080/deletelist/" + id;
+            httpRequest.open("DELETE", url);
+            httpRequest.send();
+            httpRequest.onload = function () {
+                console.log(obj);
+                window.location.href = "/index.html";
+            }
+        }
+
+        function editTodo(button) {
+            var index = button.value;
+            ID = obj[index].id;
+            var name = obj[index].name;
+            document.getElementById("todoInput").value = name;
+        }
+
+        function isComplete(button) {
+            var index = button.value;
+            var name = obj[index].name;
+
+            var id = obj[index].id;
+            
+            var isCompleted = button.checked;
+            alert(isCompleted);
+            isCompleted = isCompleted;
+           
+            fetch("http://localhost:8080/updatelist/" , {
+                method: 'PUT',
+                body: JSON.stringify({
+                    id :id,
+                    name: name,
+                    isCompleted: isCompleted
+                }),
+                headers: {
+                    "Content-Type": "application/json; charset=UTF-8"
+                }
+            }).then(function (response) {
+                window.location.href = "/index.html";
+                return response;
+            }).then(function (data) {
+                console.log(data);
+            });
+        }
+
+    </script>
+
+</body>
+
+</html>
